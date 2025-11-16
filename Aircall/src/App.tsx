@@ -9,7 +9,10 @@ import { HistoryDay } from "./components/HistoryDay";
 import { AgentsPage } from "./components/AgentsPage";
 import { HistoryMonth } from "./components/HistoryMonth";
 import { AgentMetrics } from "./components/AgentMetrics";
-import { Charts } from "./components/Charts";
+import {
+  MissedBreakdownChart,
+  CallPerformanceChart,
+} from "./components/Charts";
 import { StatCard } from "./components/StatCard";
 import { KpiBars } from "./components/KpiBars";
 import type { DailyMetrics } from "./types";
@@ -200,7 +203,12 @@ function App() {
                       <>
                         <div className="chart-row mt24">
                           <div className="panel">
-                            <Charts data={display} />
+                            <h3>Missed Breakdown</h3>
+                            <MissedBreakdownChart data={display} />
+                          </div>
+                          <div className="panel">
+                            <h3>Call Performance</h3>
+                            <CallPerformanceChart data={display} />
                           </div>
                           <div className="panel">
                             <AgentMetrics
