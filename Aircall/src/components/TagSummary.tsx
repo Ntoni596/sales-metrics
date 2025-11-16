@@ -11,15 +11,17 @@ export function CategoryBar({ categories }: { categories: CategoryCount[] }) {
           style={{ display: "flex", alignItems: "center", gap: 8 }}
         >
           <div style={{ width: 180, fontSize: 12 }}>{c.name}</div>
-          <div
-            style={{
-              background: "#4b8eda",
-              height: 14,
-              borderRadius: 4,
-              width: `${(c.count / max) * 300}px`,
-              transition: "width .3s",
-            }}
-          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                background: "#4b8eda",
+                height: 14,
+                borderRadius: 4,
+                width: `${(c.count / max) * 100}%`,
+                transition: "width .3s",
+              }}
+            />
+          </div>
           <div style={{ fontSize: 12 }}>{c.count}</div>
         </div>
       ))}

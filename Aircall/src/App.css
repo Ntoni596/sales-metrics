@@ -188,6 +188,7 @@ body {
   border-radius: var(--radius);
   padding: 18px 20px;
   box-shadow: var(--shadow);
+  overflow: hidden; /* Prevent charts from overflowing corners */
 }
 .panel h3 {
   margin: 0 0 12px;
@@ -251,6 +252,12 @@ input[type="file"] {
   display: grid;
   gap: 24px;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+/* Ensure Recharts never exceeds container width */
+.panel .recharts-wrapper,
+.panel .recharts-responsive-container {
+  max-width: 100% !important;
 }
 
 /* Utility color badges */

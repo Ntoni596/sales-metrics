@@ -8,7 +8,7 @@ import {
 import type { DailyMetrics, AgentStats, CategoryCount } from "../types";
 import { StatCard } from "./StatCard";
 import { CategoryBar } from "./TagSummary";
-import { Charts } from "./Charts";
+import { MissedBreakdownChart, CallPerformanceChart } from "./Charts";
 import { AgentMetrics } from "./AgentMetrics";
 import {
   ResponsiveContainer,
@@ -251,7 +251,12 @@ export function HistoryMonth() {
           </div>
           <div className="chart-row mt24">
             <div className="panel">
-              <Charts data={rollup} />
+              <h3>Missed Breakdown</h3>
+              <MissedBreakdownChart data={rollup} />
+            </div>
+            <div className="panel">
+              <h3>Call Performance</h3>
+              <CallPerformanceChart data={rollup} />
             </div>
             <div className="panel">
               <AgentMetrics data={rollup} />
