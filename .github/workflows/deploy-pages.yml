@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -46,6 +48,14 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Add .nojekyll and SPA fallback
+        run: |
+          # ensure artifact exists
+          test -d dist
+          # prevent Jekyll processing
+          touch dist/.nojekyll
+          # spa routing fallback for GitHub Pages
+          cp dist/index.html dist/404.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
