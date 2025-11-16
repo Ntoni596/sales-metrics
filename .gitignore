@@ -1,0 +1,12 @@
+.DS_Store
+Thumbs.db
+
+Aircall/node_modules/
+Aircall/dist/
+
+Aircall/.env.local
+Aircall/.env.*.local
+
+Aircall/npm-debug.log*
+Aircall/yarn-debug.log*
+Aircall/yarn-error.log*
