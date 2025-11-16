@@ -131,6 +131,15 @@ function App() {
                 path="/"
                 element={
                   <div>
+                    <div style={{ marginTop: 0 }}>
+                      <FileUploader onUploaded={(m) => setLatest(m)} />
+                      {/* <div className="panel" style={{ marginTop: 24 }}>
+                        <DailySummary
+                          data={display}
+                          title="Today Summary (Filtered)"
+                        />
+                      </div> */}
+                    </div>
                     <AgentFilter
                       selected={selectedAgents}
                       onChange={setSelectedAgents}
@@ -190,15 +199,6 @@ function App() {
                         />
                       </div>
                     )}
-                    <div style={{ marginTop: 24 }}>
-                      <FileUploader onUploaded={(m) => setLatest(m)} />
-                      {/* <div className="panel" style={{ marginTop: 24 }}>
-                        <DailySummary
-                          data={display}
-                          title="Today Summary (Filtered)"
-                        />
-                      </div> */}
-                    </div>
                     {display && (
                       <>
                         <div className="chart-row mt24">
