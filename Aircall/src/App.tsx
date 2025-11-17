@@ -155,7 +155,7 @@ function App() {
                       />
                       <div className="cards-row">
                         <StatCard
-                          title="Inbound (Effective)"
+                          title="Inbound"
                           value={display?.inboundEffective ?? "—"}
                         />
                         <StatCard

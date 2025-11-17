@@ -42,7 +42,7 @@ export function MissedBreakdownChart({ data }: { data: DailyMetrics }) {
 
 export function CallPerformanceChart({ data }: { data: DailyMetrics }) {
   const perfData = [
-    { name: "Inbound Eff", value: data.inboundEffective },
+    { name: "Inbound", value: data.inboundEffective },
     { name: "Outbound", value: data.outbound },
     { name: "Answered", value: data.answered },
     { name: "Missed", value: data.missed },

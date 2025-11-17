@@ -190,10 +190,7 @@ export function HistoryMonth() {
       {rollup && (
         <>
           <div className="cards-row" style={{ marginTop: 12 }}>
-            <StatCard
-              title="Inbound (Effective)"
-              value={rollup.inboundEffective}
-            />
+            <StatCard title="Inbound" value={rollup.inboundEffective} />
             <StatCard title="Outbound" value={rollup.outbound} />
             <StatCard title="Answered" value={rollup.answered} />
             <StatCard title="Missed" value={rollup.missed} />
