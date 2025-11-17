@@ -15,6 +15,7 @@ import { HistoryMonth } from "./components/HistoryMonth";
 import { AgentMetrics } from "./components/AgentMetrics";
 import { BootstrapAdmin } from "./components/BootstrapAdmin";
 import { ShowroomDashboard } from "./components/ShowroomDashboard";
+import { BulkImport } from "./components/BulkImport";
 import {
   MissedBreakdownChart,
   CallPerformanceChart,
@@ -126,7 +127,7 @@ function App() {
   }, [display]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="layout">
         <Sidebar />
         <div className="content">
@@ -264,6 +265,14 @@ function App() {
                 element={
                   <RequireAuth>
                     <AgentsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/import/bulk"
+                element={
+                  <RequireAuth>
+                    <BulkImport />
                   </RequireAuth>
                 }
               />

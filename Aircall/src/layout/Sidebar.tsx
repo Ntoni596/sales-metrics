@@ -10,6 +10,10 @@ const sections = [
     ],
   },
   { title: "Data", items: [{ to: "/agents", label: "Agents" }] },
+  {
+    title: "Import",
+    items: [{ to: "/import/bulk", label: "Bulk (1-year CSV)" }],
+  },
 ];
 
 export function Sidebar() {
