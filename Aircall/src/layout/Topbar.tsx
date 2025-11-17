@@ -22,7 +22,11 @@ export function Topbar({ latest }: { latest: DailyMetrics | null }) {
               {user.email}
             </span>
             {isAdmin && (
-              <Link to="/admin/users" className="badge" style={{ marginRight: 8 }}>
+              <Link
+                to="/admin/users"
+                className="badge"
+                style={{ marginRight: 8 }}
+              >
                 Admin
               </Link>
             )}
