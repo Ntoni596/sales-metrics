@@ -1,5 +1,6 @@
 import type { DailyMetrics } from "../types";
 import { useAuth } from "../auth";
+import { Link } from "react-router-dom";
 
 export function Topbar({ latest }: { latest: DailyMetrics | null }) {
   const { user, isAdmin, signOut } = useAuth();
@@ -21,13 +22,9 @@ export function Topbar({ latest }: { latest: DailyMetrics | null }) {
               {user.email}
             </span>
             {isAdmin && (
-              <a
-                href="/admin/users"
-                className="badge"
-                style={{ marginRight: 8 }}
-              >
+              <Link to="/admin/users" className="badge" style={{ marginRight: 8 }}>
                 Admin
-              </a>
+              </Link>
             )}
             <button onClick={() => signOut()}>Sign out</button>
           </div>
