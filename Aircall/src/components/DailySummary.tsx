@@ -65,11 +65,5 @@ function buildEodBlock(d: DailyMetrics, missedPct: string) {
   const catLines = d.categoryCounts
     .map((c) => `${c.name},${c.count}`)
     .join("\n");
-  return `Calls\nInbound (Effective): ${d.inboundEffective}\nOutbound: ${
-    d.outbound
-  }\nMissed: ${d.missed} (${missedPct}% Missed)\nAnswered: ${
-    d.answered
-  }\nAvg Wait Time: ${d.avgWaitSeconds.toFixed(1)}s\n\nTop Inbound Agent: ${
-    d.topInboundPerformer?.user || "N/A"
-  } (${d.topInboundPerformer?.count || 0})\n\nCategories (Top):\n${catLines}`;
+  return `${d.answered}/${d.inboundEffective}  ${d.missed} (${missedPct}% Missed)\nOutbound ${d.outbound}\n${catLines}`;
 }

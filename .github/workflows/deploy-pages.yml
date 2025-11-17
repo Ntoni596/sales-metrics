@@ -2,7 +2,7 @@ name: Deploy Aircall dashboard to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, deploy/github-pages]
   workflow_dispatch:
 
 permissions:
@@ -21,9 +21,8 @@ jobs:
       run:
         working-directory: Aircall
     env:
-      # Mark that we are building for GitHub Pages so Vite sets correct base
       GITHUB_PAGES: "true"
-      # Firebase envs (set these in repo Settings > Secrets and variables > Actions)
+
       VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
       VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
       VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
