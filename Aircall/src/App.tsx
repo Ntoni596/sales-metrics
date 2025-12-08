@@ -16,6 +16,9 @@ import { AgentMetrics } from "./components/AgentMetrics";
 import { BootstrapAdmin } from "./components/BootstrapAdmin";
 import { ShowroomDashboard } from "./components/ShowroomDashboard";
 import { BulkImport } from "./components/BulkImport";
+import { CsvHeaderSettings } from "./components/CsvHeaderSettings";
+import { CsvFormatGuide } from "./components/CsvFormatGuide";
+import { CsvTester } from "./components/CsvTester";
 import {
   MissedBreakdownChart,
   CallPerformanceChart,
@@ -128,19 +131,20 @@ function App() {
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <div className="layout">
+      <div className='layout'>
         <Sidebar />
-        <div className="content">
+        <div className='content'>
           <Topbar latest={display} />
           <div style={{ padding: "24px" }}>
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path='/login' element={<Login />} />
               <Route
-                path="/"
+                path='/'
                 element={
                   <RequireAuth>
                     <div>
                       <div style={{ marginTop: 0 }}>
+                        <CsvFormatGuide />
                         <FileUploader onUploaded={(m) => setLatest(m)} />
                         {/* <div className="panel" style={{ marginTop: 24 }}>
                         <DailySummary
@@ -154,21 +158,21 @@ function App() {
                         onChange={setSelectedAgents}
                         availableAgents={latest?.agentStats.map((a) => a.user)}
                       />
-                      <div className="cards-row">
+                      <div className='cards-row'>
                         <StatCard
-                          title="Inbound"
+                          title='Inbound'
                           value={display?.inboundEffective ?? "—"}
                         />
                         <StatCard
-                          title="Outbound"
+                          title='Outbound'
                           value={display?.outbound ?? "—"}
                         />
                         <StatCard
-                          title="Answered"
+                          title='Answered'
                           value={display?.answered ?? "—"}
                         />
                         <StatCard
-                          title="Missed"
+                          title='Missed'
                           value={display?.missed ?? "—"}
                           delta={
                             display
@@ -181,13 +185,13 @@ function App() {
                           }
                         />
                         <StatCard
-                          title="Avg Wait (s)"
+                          title='Avg Wait (s)'
                           value={
                             display ? display.avgWaitSeconds.toFixed(1) : "—"
                           }
                         />
                         <StatCard
-                          title="Top Inbound"
+                          title='Top Inbound'
                           value={
                             display
                               ? display.topInboundPerformer?.user || "—"
@@ -201,7 +205,7 @@ function App() {
                         />
                       </div>
                       {display && (
-                        <div className="panel" style={{ marginTop: 16 }}>
+                        <div className='panel' style={{ marginTop: 16 }}>
                           <h3>Top Categories</h3>
                           <CategoryBar
                             categories={display.categoryCounts.slice(0, 10)}
@@ -210,23 +214,23 @@ function App() {
                       )}
                       {display && (
                         <>
-                          <div className="chart-row mt24">
-                            <div className="panel">
+                          <div className='chart-row mt24'>
+                            <div className='panel'>
                               <h3>Missed Breakdown</h3>
                               <MissedBreakdownChart data={display} />
                             </div>
-                            <div className="panel">
+                            <div className='panel'>
                               <h3>Call Performance</h3>
                               <CallPerformanceChart data={display} />
                             </div>
-                            <div className="panel">
+                            <div className='panel'>
                               <AgentMetrics
                                 data={display}
                                 onlyAgents={selectedAgents}
                               />
                             </div>
                           </div>
-                          <div className="panel mt24">
+                          <div className='panel mt24'>
                             <h3>KPIs</h3>
                             <KpiBars items={kpis} />
                           </div>
@@ -237,7 +241,7 @@ function App() {
                 }
               />
               <Route
-                path="/history"
+                path='/history'
                 element={
                   <RequireAuth>
                     <History />
@@ -245,7 +249,7 @@ function App() {
                 }
               />
               <Route
-                path="/history/month/:month"
+                path='/history/month/:month'
                 element={
                   <RequireAuth>
                     <HistoryMonth />
@@ -253,7 +257,7 @@ function App() {
                 }
               />
               <Route
-                path="/history/:date"
+                path='/history/:date'
                 element={
                   <RequireAuth>
                     <HistoryDay />
@@ -261,7 +265,7 @@ function App() {
                 }
               />
               <Route
-                path="/agents"
+                path='/agents'
                 element={
                   <RequireAuth>
                     <AgentsPage />
@@ -269,7 +273,7 @@ function App() {
                 }
               />
               <Route
-                path="/import/bulk"
+                path='/import/bulk'
                 element={
                   <RequireAuth>
                     <BulkImport />
@@ -277,7 +281,7 @@ function App() {
                 }
               />
               <Route
-                path="/showroom"
+                path='/showroom'
                 element={
                   <RequireAuth>
                     <ShowroomDashboard />
@@ -285,7 +289,7 @@ function App() {
                 }
               />
               <Route
-                path="/admin/users"
+                path='/admin/users'
                 element={
                   <RequireAdmin>
                     <AdminUsers />
@@ -293,10 +297,26 @@ function App() {
                 }
               />
               <Route
-                path="/bootstrap"
+                path='/bootstrap'
                 element={
                   <RequireAuth>
                     <BootstrapAdmin />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path='/settings/csv-headers'
+                element={
+                  <RequireAuth>
+                    <CsvHeaderSettings />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path='/settings/csv-tester'
+                element={
+                  <RequireAuth>
+                    <CsvTester />
                   </RequireAuth>
                 }
               />

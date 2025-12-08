@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { parseCsv, computeDailyMetrics } from "../services/metrics";
 import type { CallRecord, DailyMetrics } from "../types";
 import { getDailyByDate, saveDailyMetrics } from "../services/storage";
+import { CsvHeaderAnalyzer } from "./CsvHeaderAnalyzer";
+import { CsvFormatGuide } from "./CsvFormatGuide";
 
 function normalizeDate(ts: string): string {
   const d = new Date(ts);
@@ -21,6 +23,7 @@ export function BulkImport() {
   );
   const [existing, setExisting] = useState<Set<string>>(new Set());
   const [savedCount, setSavedCount] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   async function onFile(file?: File) {
     if (!file) return;
@@ -95,44 +98,55 @@ export function BulkImport() {
   }
 
   return (
-    <div className="panel" style={{ padding: 16 }}>
-      <h3>Bulk Import (one-time)</h3>
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          flexWrap: "wrap",
-        }}
-      >
-        <input
-          type="file"
-          accept=".csv,text/csv"
-          disabled={busy}
-          onChange={(e) => onFile(e.target.files?.[0])}
-        />
-        {stats && (
-          <>
-            <span>
-              Days detected: <strong>{stats.total}</strong> (existing:{" "}
-              {stats.already}, new: {stats.toSave})
-            </span>
-            <span>
-              Range: {stats.first} → {stats.last}
-            </span>
-            <button onClick={onSave} disabled={busy || stats.toSave === 0}>
-              Save {stats.toSave} day{stats.toSave === 1 ? "" : "s"}
-            </button>
-          </>
-        )}
-        {busy && <span>Processing…</span>}
-      </div>
-      {error && <div style={{ color: "crimson", marginTop: 8 }}>{error}</div>}
-      {savedCount > 0 && (
-        <div style={{ color: "#22c55e", marginTop: 8 }}>
-          Saved {savedCount} day{savedCount === 1 ? "" : "s"}.
+    <>
+      <CsvFormatGuide />
+      <div className='panel' style={{ padding: 16 }}>
+        <h3>Bulk Import (one-time)</h3>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <input
+            type='file'
+            accept='.csv,text/csv'
+            disabled={busy}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setSelectedFile(file);
+                onFile(file);
+              }
+            }}
+          />
+          {stats && (
+            <>
+              <span>
+                Days detected: <strong>{stats.total}</strong> (existing:{" "}
+                {stats.already}, new: {stats.toSave})
+              </span>
+              <span>
+                Range: {stats.first} → {stats.last}
+              </span>
+              <button onClick={onSave} disabled={busy || stats.toSave === 0}>
+                Save {stats.toSave} day{stats.toSave === 1 ? "" : "s"}
+              </button>
+            </>
+          )}
+          {busy && <span>Processing…</span>}
         </div>
-      )}
-    </div>
+        {error && <div style={{ color: "crimson", marginTop: 8 }}>{error}</div>}
+        {savedCount > 0 && (
+          <div style={{ color: "#22c55e", marginTop: 8 }}>
+            Saved {savedCount} day{savedCount === 1 ? "" : "s"}.
+          </div>
+        )}
+
+        <CsvHeaderAnalyzer file={selectedFile} />
+      </div>
+    </>
   );
 }

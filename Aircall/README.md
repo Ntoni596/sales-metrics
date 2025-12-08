@@ -34,17 +34,39 @@ React + TypeScript + Vite application for uploading Aircall CSV exports, computi
 
 ## CSV Expectations
 
-Headers are matched flexibly (case-insensitive). Recommended fields:
+The application now supports **configurable CSV headers** with full Aircall export compatibility. Headers are matched case-insensitively through a flexible mapping system.
 
-- `Direction` (Inbound/Outbound)
-- `Status` or `Answered`
-- `Missed - Outside business hours`, `Missed - Abandoned`, `Missed - No agent available`, `Missed - Agent did not answer`
-- `Agent` (user handling call)
-- `Wait Time (s)` (queue/wait duration)
-- `Tags` (comma/semicolon separated list)
-- `Time` or `Timestamp` (parseable date/time)
+### Supported Headers (40+ fields)
 
-Adjust header names in `src/services/metrics.tsx` if needed.
+The system recognizes all standard Aircall export headers including:
+
+**Core Fields:**
+
+- `datetime (utc)`, `datetime (tz offset incl.)` - Call timestamps
+- `direction`, `call direction - type` - Inbound/Outbound
+- `answered` - Call status (yes/no, true/false, 1/0)
+- `missed_call_reason` - Why calls were missed
+- `user` - Agent handling the call
+- `waiting time`, `time to answer` - Queue duration
+- `tags` - Call categories/labels
+
+**Extended Fields:**
+
+- `country_code`, `from`, `to` - Call routing info
+- `duration (total)`, `duration (in call)` - Call timing
+- `call quality`, `team` - Quality metrics
+- `voicemail`, `recording`, `comments` - Call details
+- `call id`, `call type` - System identifiers
+- `disconnected by`, `ivr branch` - Technical details
+- And many more...
+
+### Configuration
+
+**Easy Header Mapping:** Go to **Settings → CSV Headers** to configure which column names map to each field. No need to modify your CSV files!
+
+**Automatic Detection:** The system automatically detects and maps headers from your CSV files, showing you which fields were found and which are missing.
+
+**Backward Compatible:** All existing CSV formats continue to work seamlessly.
 
 ## Firebase Setup
 

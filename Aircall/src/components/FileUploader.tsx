@@ -7,6 +7,7 @@ import {
   FIREBASE_CONFIG_OK,
   MISSING_ENV_KEYS,
 } from "../firebase";
+import { CsvHeaderAnalyzer } from "./CsvHeaderAnalyzer";
 
 export function FileUploader({
   onUploaded,
@@ -26,6 +27,7 @@ export function FileUploader({
     message?: string;
     url: string;
   } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const onFile = async (file?: File) => {
     if (!file) return;
@@ -94,10 +96,10 @@ export function FileUploader({
   };
 
   return (
-    <div className="panel" style={{ padding: 12, marginBottom: 16 }}>
+    <div className='panel' style={{ padding: 12, marginBottom: 16 }}>
       {!FIREBASE_CONFIG_OK && (
         <div
-          className="panel"
+          className='panel'
           style={{
             borderColor: "#b91c1c",
             background: "#1f2937",
@@ -117,7 +119,7 @@ export function FileUploader({
       )}
       {permError && (
         <div
-          className="panel"
+          className='panel'
           style={{
             borderColor: "#b45309",
             background: "#1f2937",
@@ -134,15 +136,15 @@ export function FileUploader({
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button
-              className="btn"
-              type="button"
+              className='btn'
+              type='button'
               onClick={() => window.open(permError.url, "_blank", "noopener")}
             >
               Enable Firestore API
             </button>
             <button
-              className="btn"
-              type="button"
+              className='btn'
+              type='button'
               onClick={onSave}
               disabled={busy || !preview}
             >
@@ -161,14 +163,20 @@ export function FileUploader({
       >
         <strong>Upload daily CSV</strong>
         <input
-          type="file"
-          accept=".csv,text/csv"
+          type='file'
+          accept='.csv,text/csv'
           disabled={busy}
-          onChange={(e) => onFile(e.target.files?.[0])}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setSelectedFile(file);
+              onFile(file);
+            }
+          }}
         />
         <label style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <input
-            type="checkbox"
+            type='checkbox'
             checked={includeRecords}
             onChange={(e) => setIncludeRecords(e.target.checked)}
             disabled={busy}
@@ -176,7 +184,7 @@ export function FileUploader({
           Save raw records (slower)
         </label>
         <button
-          className="btn"
+          className='btn'
           onClick={onSave}
           disabled={busy || !preview || !FIREBASE_CONFIG_OK}
         >
@@ -190,6 +198,9 @@ export function FileUploader({
       {savedOk && (
         <div style={{ color: "#22c55e", marginTop: 8 }}>{savedOk}</div>
       )}
+
+      <CsvHeaderAnalyzer file={selectedFile} />
+
       {preview && (
         <div style={{ marginTop: 12 }}>
           <strong>Copy/Paste EOD Block</strong>
