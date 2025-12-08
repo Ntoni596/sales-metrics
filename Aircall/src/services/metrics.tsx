@@ -183,7 +183,6 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
   }
 
   if (!rows.length) {
-    const configuredHeaders = Object.values(csvConfig).flat();
     const foundHeaders = availableHeaders.slice(0, 10).join(", ");
     throw new Error(
       `No records found. Available headers: ${foundHeaders}${
