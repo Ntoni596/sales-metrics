@@ -239,16 +239,35 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
 }
 
 function dateFromTimestamp(ts: string): string {
-  // Normalize various date formats to YYYY-MM-DD
-  const d = new Date(ts);
-  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  const trimmed = ts.trim();
+  if (!trimmed) return "";
+
+  // ISO timestamps (e.g. 2025-12-04T12:42:37Z) can safely use Date to normalise
+  if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed) || /Z$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+
+  // Aircall exports often provide "YYYY-MM-DD HH:MM:SS" without timezone.
+  // Avoid Date() here to prevent local timezone shifting the calendar day.
+  const dashMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (dashMatch) {
+    return `${dashMatch[1]}-${dashMatch[2]}-${dashMatch[3]}`;
+  }
+
   // Match DD/MM/YYYY
-  const m1 = ts.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (m1) return `${m1[3]}-${m1[2]}-${m1[1]}`;
-  // Match MM/DD/YYYY
-  const m2 = ts.match(/^(\d{2})\-(\d{2})\-(\d{4})/);
-  if (m2) return `${m2[3]}-${m2[1]}-${m2[2]}`;
-  return ts.slice(0, 10);
+  const slashMatch = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (slashMatch) return `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
+
+  // Match MM-DD-YYYY
+  const hyphenAltMatch = trimmed.match(/^(\d{2})\-(\d{2})\-(\d{4})/);
+  if (hyphenAltMatch)
+    return `${hyphenAltMatch[3]}-${hyphenAltMatch[1]}-${hyphenAltMatch[2]}`;
+
+  // Fallback: try Date(); if still invalid, take the first 10 chars to preserve best effort.
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return trimmed.slice(0, 10);
 }
 
 export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
