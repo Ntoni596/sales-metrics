@@ -17,14 +17,7 @@ const sections = [
   },
   {
     title: "Settings",
-    items: [
-      { to: "/settings/csv-headers", label: "CSV Headers" },
-      { to: "/settings/csv-tester", label: "CSV Tester" },
-    ],
-  },
-  {
-    title: "Debug",
-    items: [{ to: "/debug/parsing-test", label: "Parsing Test" }],
+    items: [{ to: "/settings/csv-headers", label: "CSV Headers" }],
   },
 ];
 
