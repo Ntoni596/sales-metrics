@@ -2,6 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import { Sidebar } from "./layout/Sidebar";
+import {
+  FIREBASE_CONFIG_OK,
+  MISSING_ENV_KEYS,
+  FIRESTORE_ENABLE_URL,
+} from "./firebase";
 import { Topbar } from "./layout/Topbar";
 import { FileUploader } from "./components/FileUploader";
 import { RequireAuth } from "./components/RequireAuth";
@@ -32,8 +37,41 @@ import {
   NO_ASSOC_LABEL,
 } from "./components/AgentFilter";
 import { CategoryBar } from "./components/TagSummary";
+import { FrontDashboard } from "./components/FrontDashboard";
 
 function App() {
+  // Startup guard: show a clear message if Firebase env config is invalid
+  if (!FIREBASE_CONFIG_OK) {
+    return (
+      <div className="layout">
+        <Sidebar />
+        <div className="content">
+          <div style={{ padding: 24 }}>
+            <div
+              className="panel"
+              style={{ borderColor: "#b91c1c", background: "#1f2937" }}
+            >
+              <h3>Firebase config invalid</h3>
+              <p style={{ opacity: 0.9 }}>
+                Missing or invalid environment values. Set these in{" "}
+                <code>src/.env.local</code> and restart the dev server:
+              </p>
+              <div style={{ marginTop: 8 }}>
+                {MISSING_ENV_KEYS.join(", ") || "VITE_FIREBASE_* values"}
+              </div>
+              <div style={{ marginTop: 12 }}>
+                If Firestore API is disabled, enable it here:{" "}
+                <a href={FIRESTORE_ENABLE_URL} target="_blank" rel="noreferrer">
+                  Firestore API
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [latest, setLatest] = useState<DailyMetrics | null>(null);
   const [selectedAgents, setSelectedAgents] =
     useState<string[]>(DEFAULT_AGENTS);
@@ -150,15 +188,15 @@ function App() {
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <div className='layout'>
+      <div className="layout">
         <Sidebar />
-        <div className='content'>
+        <div className="content">
           <Topbar latest={display} />
           <div style={{ padding: "24px" }}>
             <Routes>
-              <Route path='/login' element={<Login />} />
+              <Route path="/login" element={<Login />} />
               <Route
-                path='/'
+                path="/"
                 element={
                   <RequireAuth>
                     <div>
@@ -177,21 +215,21 @@ function App() {
                         onChange={setSelectedAgents}
                         availableAgents={latest?.agentStats.map((a) => a.user)}
                       />
-                      <div className='cards-row'>
+                      <div className="cards-row">
                         <StatCard
-                          title='Inbound'
+                          title="Inbound"
                           value={display?.inboundEffective ?? "—"}
                         />
                         <StatCard
-                          title='Outbound'
+                          title="Outbound"
                           value={display?.outbound ?? "—"}
                         />
                         <StatCard
-                          title='Answered'
+                          title="Answered"
                           value={display?.answered ?? "—"}
                         />
                         <StatCard
-                          title='Missed'
+                          title="Missed"
                           value={display?.missed ?? "—"}
                           delta={
                             display
@@ -204,13 +242,13 @@ function App() {
                           }
                         />
                         <StatCard
-                          title='Avg Wait (s)'
+                          title="Avg Wait (s)"
                           value={
                             display ? display.avgWaitSeconds.toFixed(1) : "—"
                           }
                         />
                         <StatCard
-                          title='Top Inbound'
+                          title="Top Inbound"
                           value={
                             display
                               ? display.topInboundPerformer?.user || "—"
@@ -224,7 +262,7 @@ function App() {
                         />
                       </div>
                       {display && (
-                        <div className='panel' style={{ marginTop: 16 }}>
+                        <div className="panel" style={{ marginTop: 16 }}>
                           <h3>Top Categories</h3>
                           <CategoryBar
                             categories={display.categoryCounts.slice(0, 10)}
@@ -233,23 +271,23 @@ function App() {
                       )}
                       {display && (
                         <>
-                          <div className='chart-row mt24'>
-                            <div className='panel'>
+                          <div className="chart-row mt24">
+                            <div className="panel">
                               <h3>Missed Breakdown</h3>
                               <MissedBreakdownChart data={display} />
                             </div>
-                            <div className='panel'>
+                            <div className="panel">
                               <h3>Call Performance</h3>
                               <CallPerformanceChart data={display} />
                             </div>
-                            <div className='panel'>
+                            <div className="panel">
                               <AgentMetrics
                                 data={display}
                                 onlyAgents={selectedAgents}
                               />
                             </div>
                           </div>
-                          <div className='panel mt24'>
+                          <div className="panel mt24">
                             <h3>KPIs</h3>
                             <KpiBars items={kpis} />
                           </div>
@@ -260,7 +298,7 @@ function App() {
                 }
               />
               <Route
-                path='/history'
+                path="/history"
                 element={
                   <RequireAuth>
                     <History />
@@ -268,7 +306,7 @@ function App() {
                 }
               />
               <Route
-                path='/history/month/:month'
+                path="/history/month/:month"
                 element={
                   <RequireAuth>
                     <HistoryMonth />
@@ -276,7 +314,7 @@ function App() {
                 }
               />
               <Route
-                path='/history/:date'
+                path="/history/:date"
                 element={
                   <RequireAuth>
                     <HistoryDay />
@@ -284,7 +322,7 @@ function App() {
                 }
               />
               <Route
-                path='/agents'
+                path="/agents"
                 element={
                   <RequireAuth>
                     <AgentsPage />
@@ -292,7 +330,7 @@ function App() {
                 }
               />
               <Route
-                path='/import/bulk'
+                path="/import/bulk"
                 element={
                   <RequireAuth>
                     <BulkImport />
@@ -300,7 +338,7 @@ function App() {
                 }
               />
               <Route
-                path='/showroom'
+                path="/showroom"
                 element={
                   <RequireAuth>
                     <ShowroomDashboard />
@@ -308,7 +346,15 @@ function App() {
                 }
               />
               <Route
-                path='/admin/users'
+                path="/front"
+                element={
+                  <RequireAuth>
+                    <FrontDashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/users"
                 element={
                   <RequireAdmin>
                     <AdminUsers />
@@ -316,7 +362,7 @@ function App() {
                 }
               />
               <Route
-                path='/bootstrap'
+                path="/bootstrap"
                 element={
                   <RequireAuth>
                     <BootstrapAdmin />
@@ -324,7 +370,7 @@ function App() {
                 }
               />
               <Route
-                path='/settings/csv-headers'
+                path="/settings/csv-headers"
                 element={
                   <RequireAuth>
                     <CsvHeaderSettings />

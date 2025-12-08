@@ -4,8 +4,18 @@ import {
   getDailyForMonth,
   getMonthlyByMonth,
   getMonthlySummaries,
+  getFrontMonthlySummary,
+  getFrontDailyForMonth,
 } from "../services/storage";
-import type { DailyMetrics, AgentStats, CategoryCount } from "../types";
+import type {
+  DailyMetrics,
+  AgentStats,
+  CategoryCount,
+  FrontMonthlySummary,
+  FrontDailySummary,
+  FrontChannelStats,
+  FrontChannelKey,
+} from "../types";
 import { StatCard } from "./StatCard";
 import { CategoryBar } from "./TagSummary";
 import { MissedBreakdownChart, CallPerformanceChart } from "./Charts";
@@ -37,6 +47,10 @@ export function HistoryMonth() {
   const [series, setSeries] = useState<
     { month: string; inbound: number; answered: number }[]
   >([]);
+  const [frontMonthly, setFrontMonthly] = useState<FrontMonthlySummary | null>(
+    null
+  );
+  const [frontDaily, setFrontDaily] = useState<FrontDailySummary[]>([]);
 
   useEffect(() => {
     if (!month) return;
@@ -81,9 +95,24 @@ export function HistoryMonth() {
           answered: m.answered,
         }))
       );
+      try {
+        const [frontMonth, frontDays] = await Promise.all([
+          getFrontMonthlySummary(month),
+          getFrontDailyForMonth(month),
+        ]);
+        setFrontMonthly(frontMonth);
+        setFrontDaily(frontDays);
+      } catch (err: unknown) {
+        console.warn("[HistoryMonth] failed to load Front data", err);
+        setFrontMonthly(null);
+        setFrontDaily([]);
+      }
       setLoading(false);
     })();
   }, [month]);
+
+  const livechatStats = frontMonthly?.channels?.livechat;
+  const emailStats = frontMonthly?.channels?.email;
 
   const rollup = useMemo(() => {
     if (!days || !days.length) return null;
@@ -97,6 +126,8 @@ export function HistoryMonth() {
     const missedBreakdown: Record<string, number> = {};
     const categoryMap: Record<string, number> = {};
     const agentMap = new Map<string, AgentStats>();
+    let inboundUntagged = 0;
+    const untaggedByUserAgg: Record<string, number> = {};
 
     for (const d of days) {
       inboundEffective += d.inboundEffective;
@@ -133,6 +164,13 @@ export function HistoryMonth() {
           (ex.inboundAnsweredWaitCount || 0) +
           (a.inboundAnsweredWaitCount || 0);
         agentMap.set(a.user, ex);
+      }
+      // Tagging aggregation
+      inboundUntagged += d.inboundUntagged || 0;
+      for (const entry of d.untaggedInboundByUser || []) {
+        if (!entry || !entry.user) continue;
+        untaggedByUserAgg[entry.user] =
+          (untaggedByUserAgg[entry.user] || 0) + (entry.count || 0);
       }
     }
     const avgWaitSeconds = answeredWaitCount
@@ -172,6 +210,10 @@ export function HistoryMonth() {
       agentStats,
       categoryCounts,
       recordsStored: 0,
+      inboundUntagged,
+      untaggedInboundByUser: Object.entries(untaggedByUserAgg)
+        .map(([user, count]) => ({ user, count }))
+        .sort((a, b) => b.count - a.count),
     };
     return monthData;
   }, [days, month]);
@@ -229,6 +271,226 @@ export function HistoryMonth() {
           <div className="panel" style={{ marginTop: 16 }}>
             <h3>Top Categories</h3>
             <CategoryBar categories={rollup.categoryCounts.slice(0, 10)} />
+          </div>
+          {frontMonthly ? (
+            <div className="panel mt24">
+              <h3>Front Communications Overview</h3>
+              <div className="cards-row" style={{ marginTop: 12 }}>
+                <StatCard
+                  title="Total Conversations"
+                  value={formatCount(frontMonthly.conversations)}
+                />
+                <StatCard
+                  title="Live Chat Conversations"
+                  value={formatCount(livechatStats?.conversations)}
+                />
+                <StatCard
+                  title="Email Conversations"
+                  value={formatCount(emailStats?.conversations)}
+                />
+              </div>
+              <div className="cards-row" style={{ marginTop: 12 }}>
+                <StatCard
+                  title="Live Chat Avg First Response (s)"
+                  value={formatSeconds(livechatStats?.avgFirstResponseSeconds)}
+                />
+                <StatCard
+                  title="Email Avg First Response (s)"
+                  value={formatSeconds(emailStats?.avgFirstResponseSeconds)}
+                />
+                <StatCard
+                  title="Live Chat Within 1 min"
+                  value={formatRatio(
+                    livechatStats?.metResponseTarget,
+                    livechatStats?.conversations
+                  )}
+                  footer={formatPctValue(
+                    livechatStats?.metResponseTarget,
+                    livechatStats?.conversations
+                  )}
+                />
+              </div>
+              <div className="cards-row" style={{ marginTop: 12 }}>
+                <StatCard
+                  title="Email Within 24 hrs"
+                  value={formatRatio(
+                    emailStats?.metResponseTarget,
+                    emailStats?.conversations
+                  )}
+                  footer={formatPctValue(
+                    emailStats?.metResponseTarget,
+                    emailStats?.conversations
+                  )}
+                />
+                <StatCard
+                  title="Live Chat After Hours"
+                  value={formatRatio(
+                    livechatStats?.afterHoursConversations,
+                    livechatStats?.conversations
+                  )}
+                  footer={formatPctValue(
+                    livechatStats?.afterHoursConversations,
+                    livechatStats?.conversations
+                  )}
+                />
+                <StatCard
+                  title="Unique Contacts"
+                  value={formatCount(frontMonthly.uniqueContacts)}
+                />
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gap: 12,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                  marginTop: 16,
+                }}
+              >
+                <ChannelBreakdown
+                  title="Live Chat"
+                  stats={livechatStats}
+                  channel="livechat"
+                />
+                <ChannelBreakdown
+                  title="Email"
+                  stats={emailStats}
+                  channel="email"
+                />
+              </div>
+              {frontMonthly.topTags?.length ? (
+                <div style={{ marginTop: 16 }}>
+                  <strong>Top Tags</strong>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 12,
+                      flexWrap: "wrap",
+                      marginTop: 6,
+                    }}
+                  >
+                    {frontMonthly.topTags.slice(0, 6).map((tag) => (
+                      <span
+                        key={tag.name}
+                        style={{
+                          background: "#111827",
+                          borderRadius: 4,
+                          padding: "4px 8px",
+                          fontSize: 12,
+                          border: "1px solid #1f2937",
+                        }}
+                      >
+                        {tag.name}: {tag.count}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {frontMonthly.aiInsights?.length ? (
+                <div style={{ marginTop: 16 }}>
+                  <strong>AI Insights</strong>
+                  <ul style={{ marginTop: 8, paddingLeft: 20 }}>
+                    {frontMonthly.aiInsights.slice(0, 5).map((insight) => (
+                      <li
+                        key={insight.id}
+                        style={{
+                          marginBottom: 8,
+                          color:
+                            insight.impact === "warning"
+                              ? "#f97316"
+                              : insight.impact === "positive"
+                              ? "#10b981"
+                              : "inherit",
+                        }}
+                      >
+                        <strong>{insight.title}:</strong> {insight.detail}
+                        {insight.metric ? ` (${insight.metric})` : null}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="panel mt24">
+              <h3>Front Communications Overview</h3>
+              <div style={{ opacity: 0.7 }}>
+                No Front communication data has been saved for this month yet.
+              </div>
+            </div>
+          )}
+          {frontDaily.length ? (
+            <div className="panel mt24">
+              <h3>Front Daily Breakdown</h3>
+              <table style={{ width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: 6 }}>Date</th>
+                    <th style={{ textAlign: "left", padding: 6 }}>Chats</th>
+                    <th style={{ textAlign: "left", padding: 6 }}>
+                      After Hours %
+                    </th>
+                    <th style={{ textAlign: "left", padding: 6 }}>
+                      Avg First Response (s)
+                    </th>
+                    <th style={{ textAlign: "left", padding: 6 }}>Top Tag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {frontDaily.map((day) => (
+                    <tr key={day.date}>
+                      <td style={{ padding: 6 }}>{day.date}</td>
+                      <td style={{ padding: 6 }}>{day.conversations}</td>
+                      <td style={{ padding: 6 }}>
+                        {formatPct(
+                          day.afterHoursConversations,
+                          day.conversations
+                        )}
+                      </td>
+                      <td style={{ padding: 6 }}>
+                        {formatSeconds(day.avgFirstResponseSeconds)}
+                      </td>
+                      <td style={{ padding: 6 }}>
+                        {day.topTags && day.topTags.length
+                          ? `${day.topTags[0].name} (${day.topTags[0].count})`
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          <div className="panel mt24">
+            <h3>Untagged Inbound (Answered)</h3>
+            <div className="cards-row" style={{ marginTop: 8 }}>
+              <StatCard
+                title="Untagged Inbound"
+                value={rollup.inboundUntagged || 0}
+              />
+            </div>
+            {rollup.untaggedInboundByUser &&
+              rollup.untaggedInboundByUser.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <table style={{ width: "100%" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: 6 }}>Agent</th>
+                        <th style={{ textAlign: "left", padding: 6 }}>
+                          Untagged Inbound
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rollup.untaggedInboundByUser.slice(0, 15).map((row) => (
+                        <tr key={row.user}>
+                          <td style={{ padding: 6 }}>{row.user}</td>
+                          <td style={{ padding: 6 }}>{row.count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
           </div>
           <div className="panel mt24">
             <h3>Month-to-Month Comparison</h3>
@@ -303,6 +565,149 @@ function formatPctOrDash(v?: number) {
   if (v === undefined || v === null) return "—";
   const sign = v > 0 ? "+" : "";
   return `${sign}${v.toFixed(1)}%`;
+}
+
+function formatPct(part: number, total: number) {
+  if (!total) return "—";
+  const pct = (part / total) * 100;
+  return `${pct.toFixed(1)}%`;
+}
+
+function formatSeconds(value?: number | null) {
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  const totalSeconds = Math.round(value);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return `${minutes}m ${seconds}s`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (hours < 24) return `${hours}h ${remainingMinutes}m`;
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return `${days}d ${remainingHours}h`;
+}
+
+function formatCount(value?: number | null) {
+  if (value === undefined || value === null) return "—";
+  return value.toLocaleString();
+}
+
+function formatRatio(part?: number | null, total?: number | null) {
+  if (part === undefined || part === null) return "—";
+  if (total === undefined || total === null || total === 0) return "—";
+  return `${part.toLocaleString()} / ${total.toLocaleString()}`;
+}
+
+function formatPctValue(part?: number | null, total?: number | null) {
+  if (part === undefined || part === null) return undefined;
+  if (total === undefined || total === null || total === 0) return undefined;
+  const pct = (part / total) * 100;
+  return `${pct.toFixed(1)}%`;
+}
+
+function formatRatioWithPct(part?: number | null, total?: number | null) {
+  const ratio = formatRatio(part, total);
+  const pct = formatPctValue(part, total);
+  if (ratio === "—") return "—";
+  return pct ? `${ratio} (${pct})` : ratio;
+}
+
+function ChannelBreakdown({
+  title,
+  stats,
+  channel,
+}: {
+  title: string;
+  stats?: FrontChannelStats | null;
+  channel?: FrontChannelKey;
+}) {
+  if (!stats) {
+    return (
+      <div
+        style={{
+          background: "#0b0b0b",
+          border: "1px solid #1f2937",
+          borderRadius: 8,
+          padding: 12,
+        }}
+      >
+        <strong>{title}</strong>
+        <div style={{ marginTop: 8, color: "var(--text-dim)" }}>
+          No data saved for this channel yet.
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div
+      style={{
+        background: "#0b0b0b",
+        border: "1px solid #1f2937",
+        borderRadius: 8,
+        padding: 12,
+      }}
+    >
+      <strong>{title}</strong>
+      <div style={{ marginTop: 8, display: "grid", gap: 6 }}>
+        <ChannelMetric
+          label="Conversations"
+          value={formatCount(stats.conversations)}
+        />
+        <ChannelMetric
+          label="Inbound Messages"
+          value={formatCount(stats.inboundMessages)}
+        />
+        <ChannelMetric
+          label="Outbound Messages"
+          value={formatCount(stats.outboundMessages)}
+        />
+        <ChannelMetric
+          label="Avg First Response (s)"
+          value={formatSeconds(stats.avgFirstResponseSeconds)}
+        />
+        <ChannelMetric
+          label="Avg Handle (s)"
+          value={formatSeconds(stats.avgHandleSeconds)}
+        />
+        <ChannelMetric
+          label={
+            channel === "livechat"
+              ? "Responded Within 1 min"
+              : channel === "email"
+              ? "Responded Within 24 hrs"
+              : "Responded Within Target"
+          }
+          value={formatRatioWithPct(
+            stats.metResponseTarget,
+            stats.conversations
+          )}
+        />
+        <ChannelMetric
+          label="After Hours"
+          value={formatRatioWithPct(
+            stats.afterHoursConversations,
+            stats.conversations
+          )}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ChannelMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 13,
+      }}
+    >
+      <span style={{ color: "#9ca3af" }}>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
 }
 
 function prevMonthKey(month: string) {
