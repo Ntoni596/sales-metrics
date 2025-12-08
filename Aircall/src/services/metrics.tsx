@@ -177,16 +177,6 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
           .filter((t) => t.length > 0 && t !== "-" && t.toLowerCase() !== "n/a")
       : [];
 
-    // Additional tags from comments field if available
-    const commentsHeader = getFieldValue(csvConfig.comments);
-    if (commentsHeader && r[commentsHeader]) {
-      const commentTags = (r[commentsHeader] as string)
-        .split(/[,;|/]/)
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0 && t !== "-" && t.toLowerCase() !== "n/a");
-      tags.push(...commentTags);
-    }
-
     // For Aircall exports, the "line" field often contains the call category
     const lineHeader = getFieldValue(["line", "Line"]);
     if (lineHeader && r[lineHeader]) {
