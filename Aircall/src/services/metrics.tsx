@@ -116,16 +116,31 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
         case "no_answer":
         case "did not answer":
         case "agent did not answer":
+        case "agents_did_not_answer": // Aircall format
           missedReason = "agent_no_answer";
           break;
         default: {
-          if (/(outside|business\s*hours)/.test(normalizedReason))
+          if (
+            /(outside|business\s*hours|out_of_opening_hours)/.test(
+              normalizedReason
+            )
+          )
             missedReason = "outside_hours";
-          else if (/(short_)?abandon|ivr/.test(normalizedReason))
+          else if (
+            /(short_)?abandon|ivr|short_abandoned/.test(normalizedReason)
+          )
             missedReason = "abandoned";
-          else if (/no\s*agent|no_active_agent|busy/.test(normalizedReason))
+          else if (
+            /no\s*agent|no_active_agent|no_available_agent|busy/.test(
+              normalizedReason
+            )
+          )
             missedReason = "agent_unavailable";
-          else if (/(did not answer|no\s*answer)/.test(normalizedReason))
+          else if (
+            /(did not answer|no\s*answer|agents_did_not_answer)/.test(
+              normalizedReason
+            )
+          )
             missedReason = "agent_no_answer";
         }
       }
@@ -140,9 +155,15 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
       }
     }
 
-    const user = userHeader
+    let user = userHeader
       ? (r[userHeader] as string) || "[No associated user]"
       : "[No associated user]";
+
+    // Clean up user field
+    user = user.trim();
+    if (user === "" || user.toLowerCase() === "n/a" || user === "-") {
+      user = "[No associated user]";
+    }
 
     // Wait time parsing
     const waitStr = waitTimeHeader ? (r[waitTimeHeader] as string) || "" : "";
@@ -153,8 +174,31 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
       ? tagsRaw
           .split(/[,;|/]/)
           .map((t) => t.trim())
-          .filter((t) => t.length > 0)
+          .filter((t) => t.length > 0 && t !== "-" && t.toLowerCase() !== "n/a")
       : [];
+
+    // Additional tags from comments field if available
+    const commentsHeader = getFieldValue(csvConfig.comments);
+    if (commentsHeader && r[commentsHeader]) {
+      const commentTags = (r[commentsHeader] as string)
+        .split(/[,;|/]/)
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0 && t !== "-" && t.toLowerCase() !== "n/a");
+      tags.push(...commentTags);
+    }
+
+    // For Aircall exports, the "line" field often contains the call category
+    const lineHeader = getFieldValue(["line", "Line"]);
+    if (lineHeader && r[lineHeader]) {
+      const lineValue = (r[lineHeader] as string).trim();
+      if (lineValue && lineValue !== "-" && lineValue.length > 0) {
+        // Extract category from line names like "Sales (Purchase Enquiry)"
+        const lineMatch = lineValue.match(/\(([^)]+)\)/);
+        if (lineMatch) {
+          tags.push(lineMatch[1]);
+        }
+      }
+    }
 
     // Timestamp detection
     let timestamp = timestampHeader ? (r[timestampHeader] as string) || "" : "";
@@ -261,7 +305,7 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
     } else {
       // outbound
       outbound++;
-      // We do not include outbound in answered/missed KPIs
+      // Count outbound answered calls separately if needed
     }
     if (!agentMap[r.user]) {
       agentMap[r.user] = {
@@ -290,6 +334,7 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
         // outside_hours and abandoned are excluded from agent missed
       }
     } else if (r.direction === "outbound") {
+      // Count all outbound attempts for the agent, but only answered ones in outbound stat
       if (r.answered) a.outbound++; // count only successful outbound answered
     }
     if (r.answered) {

@@ -123,6 +123,11 @@ export function CsvHeaderSettings() {
           label: "Tags/Labels",
           description: "Call tags or categories",
         },
+        {
+          key: "line" as const,
+          label: "Line/Category",
+          description: "Call line or category identifier",
+        },
       ],
     },
     {
