@@ -279,6 +279,9 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
   let waitCount = 0;
   const agentMap: Record<string, AgentStats> = {};
   const categoryCounts: Record<string, number> = {};
+  // Tagging quality (for inbound answered only)
+  let inboundUntagged = 0;
+  const untaggedByUser: Record<string, number> = {};
 
   for (const r of records) {
     if (dateFromTimestamp(r.timestamp) !== date) continue; // ignore other days if file spans multiple
@@ -289,6 +292,13 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
         if (r.waitSeconds != null) {
           waitTotal += r.waitSeconds;
           waitCount++;
+        }
+        // Track untagged inbound answered calls
+        if (!r.tags || r.tags.length === 0) {
+          inboundUntagged++;
+          if (r.user && r.user !== "[No associated user]") {
+            untaggedByUser[r.user] = (untaggedByUser[r.user] || 0) + 1;
+          }
         }
       } else {
         // classify missed inbound reasons
@@ -377,6 +387,9 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
   const categoryCountsArr = Object.entries(categoryCounts)
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
+  const untaggedInboundByUser = Object.entries(untaggedByUser)
+    .map(([user, count]) => ({ user, count }))
+    .sort((a, b) => b.count - a.count);
 
   return {
     date,
@@ -392,5 +405,7 @@ export function computeDailyMetrics(records: CallRecord[]): DailyMetrics {
     agentStats,
     categoryCounts: categoryCountsArr,
     recordsStored: records.length,
+    inboundUntagged,
+    untaggedInboundByUser,
   };
 }
