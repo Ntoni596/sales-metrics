@@ -26,7 +26,11 @@ import { StatCard } from "./components/StatCard";
 import { KpiBars } from "./components/KpiBars";
 import type { DailyMetrics } from "./types";
 import { getLatestDaily } from "./services/storage";
-import { AgentFilter, DEFAULT_AGENTS } from "./components/AgentFilter";
+import {
+  AgentFilter,
+  DEFAULT_AGENTS,
+  NO_ASSOC_LABEL,
+} from "./components/AgentFilter";
 import { CategoryBar } from "./components/TagSummary";
 
 function App() {
@@ -45,6 +49,22 @@ function App() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!latest) return;
+    const all = new Set<string>();
+    all.add(NO_ASSOC_LABEL);
+    latest.agentStats.forEach((a) => all.add(a.user));
+    const next = Array.from(all);
+    setSelectedAgents((prev) => {
+      if (prev.length === next.length) {
+        const prevSet = new Set(prev);
+        const same = next.every((name) => prevSet.has(name));
+        if (same) return prev;
+      }
+      return next;
+    });
+  }, [latest]);
 
   const display = useMemo(() => {
     if (!latest) return null;
