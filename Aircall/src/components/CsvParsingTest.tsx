@@ -233,6 +233,12 @@ const CsvParsingTest: React.FC = () => {
 
   const testData = generateTestData();
 
+  // Simple test data with just a few records to debug
+  const simpleTestData = `line,datetime (tz offset incl.),number timezone,datetime (utc),country_code,direction,from,to,answered,missed_call_reason,user,duration (total),duration (in call),voicemail,recording,comments,tags,call quality,team,call direction - type,call start time,call end time,aircall number,customer number,in-call duration,call id,call type,waiting time,time to answer,time in ivr,call id (internal),disconnected by,ivr branch,ivr widget,call timeline,callback details,callback failure,automatic callback pending time,time with ai voice agent,entry number,ai voice agent transfer branch
+New Orders Inquiry,2025-12-04 07:07:00,Etc/UTC,2025-12-04 07:07:00,AU,inbound,61400000001,61399174772,Yes,,Agent 1,302,282,,recording_1,,New Orders Inquiry,,Sales,Inbound - Answered,2025-12-04 18:07:00,2025-12-04 18:12:00,Sales (+61 3 9917 4772),+61 400000001,04:42,call_1_answered,Answered,00:00:05,00:00:03,00:00:02,3331500001,agent,Sales,Sales or Support Prompt,https://dashboard.aircall.io/calls/3331500001/timeline,,,,,Sales (+61 3 9917 4772),
+Sales (Purchase Enquiry),2025-12-04 07:14:00,Etc/UTC,2025-12-04 07:14:00,AU,inbound,61400000002,61399174772,No,no_available_agent,[No associated user],33,0,,,,,,Sales,Inbound - Missed,2025-12-04 18:14:00,2025-12-04 18:16:00,Sales (+61 3 9917 4772),+61 400000002,,call_2_missed,Missed,00:00:15,,00:00:05,3331500002,external,Sales,Sales or Support Prompt,https://dashboard.aircall.io/calls/3331500002/timeline,,,,,Sales (+61 3 9917 4772),
+Aftershock PC,2025-12-04 07:21:00,Australia/Melbourne,2025-12-04 07:21:00,AU,outbound,61399173729,61400000003,Yes,,Agent 1,186,166,,,,,,,Outbound,2025-12-04 18:21:00,2025-12-04 18:24:00,Aftershock PC (+61 3 9917 3729),+61 400000003,02:46,call_3_outbound,Outbound,00:00:03,,00:00:01,3331500003,external,,,https://dashboard.aircall.io/calls/3331500003/timeline,,,,,,`;
+
   useEffect(() => {
     const runTest = async () => {
       try {
@@ -240,7 +246,22 @@ const CsvParsingTest: React.FC = () => {
         const file = new File([blob], "test.csv", { type: "text/csv" });
 
         const records = await parseCsv(file);
+        console.log("Total parsed records:", records.length);
+        console.log("Sample records:", records.slice(0, 5));
+        console.log(
+          "Record directions:",
+          records.map((r) => r.direction)
+        );
+        console.log(
+          "Record answered status:",
+          records.map((r) => r.answered)
+        );
+        console.log(
+          "Record timestamps:",
+          records.map((r) => r.timestamp)
+        );
         const metrics = computeDailyMetrics(records);
+        console.log("Computed metrics:", metrics);
 
         setTestResults({
           recordCount: records.length,
@@ -256,6 +277,15 @@ const CsvParsingTest: React.FC = () => {
             missed: 8,
             outbound: 57,
             missedPercentage: ((8 / 83) * 100).toFixed(1),
+          },
+          rawRecords: records,
+          debugInfo: {
+            totalRecords: records.length,
+            directions: records.map((r) => r.direction),
+            answeredStatus: records.map((r) => r.answered),
+            timestamps: records.map((r) => r.timestamp),
+            users: records.map((r) => r.user),
+            tags: records.map((r) => r.tags),
           },
           records: records.slice(0, 10).map((r) => ({
             timestamp: r.timestamp,
@@ -288,6 +318,40 @@ const CsvParsingTest: React.FC = () => {
   return (
     <div className='p-6'>
       <h2 className='text-xl font-bold mb-4'>CSV Parsing Test Results</h2>
+
+      <div className='mb-6'>
+        <h3 className='font-semibold mb-2'>Debug Info</h3>
+        <div className='bg-yellow-100 p-4 rounded text-sm'>
+          <p>
+            <strong>Parsing Debug:</strong>
+          </p>
+          <p>Records parsed: {testResults.recordCount}</p>
+          {testResults.debugInfo && (
+            <>
+              <p>
+                Directions: {JSON.stringify(testResults.debugInfo.directions)}
+              </p>
+              <p>
+                Answered: {JSON.stringify(testResults.debugInfo.answeredStatus)}
+              </p>
+              <p>
+                Timestamps: {JSON.stringify(testResults.debugInfo.timestamps)}
+              </p>
+              <p>Users: {JSON.stringify(testResults.debugInfo.users)}</p>
+            </>
+          )}
+          {testResults.records && testResults.records.length > 0 && (
+            <>
+              <p>First record direction: {testResults.records[0]?.direction}</p>
+              <p>
+                First record answered:{" "}
+                {testResults.records[0]?.answered ? "true" : "false"}
+              </p>
+              <p>First record timestamp: {testResults.records[0]?.timestamp}</p>
+            </>
+          )}
+        </div>
+      </div>
 
       <div className='mb-6'>
         <h3 className='font-semibold mb-2'>Metrics Summary</h3>
