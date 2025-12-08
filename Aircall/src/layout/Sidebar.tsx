@@ -6,18 +6,24 @@ const sections = [
     items: [
       { to: "/", label: "Today" },
       { to: "/history", label: "History" },
+      { to: "/showroom", label: "Showroom" },
+      { to: "/front", label: "Front" },
     ],
   },
   { title: "Data", items: [{ to: "/agents", label: "Agents" }] },
+  {
+    title: "Import",
+    items: [{ to: "/import/bulk", label: "Bulk (1-year CSV)" }],
+  },
 ];
 
 export function Sidebar() {
   return (
-    <aside className="sidebar">
-      <h1>Aircall</h1>
+    <aside className='sidebar'>
+      <h1>Aftershock PC | Sales</h1>
       {sections.map((s) => (
-        <div key={s.title} className="nav-group">
-          <div className="nav-group-title">{s.title}</div>
+        <div key={s.title} className='nav-group'>
+          <div className='nav-group-title'>{s.title}</div>
           {s.items.map((i) => (
             <NavLink
               key={i.to}

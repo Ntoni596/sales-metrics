@@ -1,6 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { getFirestore, setLogLevel } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -20,6 +22,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const functions = getFunctions(app);
 export const FIREBASE_PROJECT_ID = (firebaseConfig.projectId || "") as string;
 export const FIRESTORE_ENABLE_URL = `https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=${FIREBASE_PROJECT_ID}`;
 // Only the minimal keys are required for Firestore usage

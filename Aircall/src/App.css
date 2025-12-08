@@ -1,17 +1,17 @@
 /* Dark theme variables */
 :root {
-  --bg: #1b0f0f;
-  --bg-alt: #271e1e;
-  --bg-alt2: #322525;
-  --border: #3f2f2f;
-  --text: #f2f5f8;
-  --text-dim: #9aa4b1;
-  --accent: #4b8eda;
+  --bg: #111111;
+  --bg-alt: #202020;
+  --bg-alt2: #95080f4b;
+  --border: #95080f00;
+  --text: #ffffff;
+  --text-dim: #ffffff85;
+  --accent: #950810;
   --accent-alt: #5fce72;
   --danger: #e74c3c;
   --warn: #f39c12;
-  --radius-sm: 4px;
-  --radius: 8px;
+  --radius-sm: 8px;
+  --radius: 10px;
   --shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.4);
   --gradient: linear-gradient(135deg, #22303f, #14181d);
   --font-stack: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
@@ -231,7 +231,7 @@ button {
   font-weight: 500;
 }
 button:hover {
-  background: #3175b9;
+  background: #f57575;
 }
 input[type="file"] {
   color: var(--text);
@@ -272,6 +272,42 @@ input[type="file"] {
   background: var(--accent);
   color: #fff;
   border: none;
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-alt);
+  z-index: 1;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+}
+.table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.scroll-table {
+  max-height: 440px;
+  overflow: auto;
+  border-radius: var(--radius);
 }
 
 /* Textarea dark style */

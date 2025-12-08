@@ -1,0 +1,19 @@
+{
+  "name": "sales-metrics-functions",
+  "scripts": {
+    "build": "tsc -b",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

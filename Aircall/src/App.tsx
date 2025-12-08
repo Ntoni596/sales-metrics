@@ -4,11 +4,18 @@ import "./App.css";
 import { Sidebar } from "./layout/Sidebar";
 import { Topbar } from "./layout/Topbar";
 import { FileUploader } from "./components/FileUploader";
+import { RequireAuth } from "./components/RequireAuth";
+import { RequireAdmin } from "./components/RequireAdmin";
+import { AdminUsers } from "./components/AdminUsers";
+import { Login } from "./components/Login";
 import { History } from "./components/History";
 import { HistoryDay } from "./components/HistoryDay";
 import { AgentsPage } from "./components/AgentsPage";
 import { HistoryMonth } from "./components/HistoryMonth";
 import { AgentMetrics } from "./components/AgentMetrics";
+import { BootstrapAdmin } from "./components/BootstrapAdmin";
+import { ShowroomDashboard } from "./components/ShowroomDashboard";
+import { BulkImport } from "./components/BulkImport";
 import {
   MissedBreakdownChart,
   CallPerformanceChart,
@@ -120,116 +127,179 @@ function App() {
   }, [display]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="layout">
         <Sidebar />
         <div className="content">
           <Topbar latest={display} />
           <div style={{ padding: "24px" }}>
             <Routes>
+              <Route path="/login" element={<Login />} />
               <Route
                 path="/"
                 element={
-                  <div>
-                    <div style={{ marginTop: 0 }}>
-                      <FileUploader onUploaded={(m) => setLatest(m)} />
-                      {/* <div className="panel" style={{ marginTop: 24 }}>
+                  <RequireAuth>
+                    <div>
+                      <div style={{ marginTop: 0 }}>
+                        <FileUploader onUploaded={(m) => setLatest(m)} />
+                        {/* <div className="panel" style={{ marginTop: 24 }}>
                         <DailySummary
                           data={display}
                           title="Today Summary (Filtered)"
                         />
                       </div> */}
-                    </div>
-                    <AgentFilter
-                      selected={selectedAgents}
-                      onChange={setSelectedAgents}
-                      availableAgents={latest?.agentStats.map((a) => a.user)}
-                    />
-                    <div className="cards-row">
-                      <StatCard
-                        title="Inbound (Effective)"
-                        value={display?.inboundEffective ?? "—"}
+                      </div>
+                      <AgentFilter
+                        selected={selectedAgents}
+                        onChange={setSelectedAgents}
+                        availableAgents={latest?.agentStats.map((a) => a.user)}
                       />
-                      <StatCard
-                        title="Outbound"
-                        value={display?.outbound ?? "—"}
-                      />
-                      <StatCard
-                        title="Answered"
-                        value={display?.answered ?? "—"}
-                      />
-                      <StatCard
-                        title="Missed"
-                        value={display?.missed ?? "—"}
-                        delta={
-                          display
-                            ? (
-                                (display.missed /
-                                  (display.inboundEffective || 1)) *
-                                100
-                              ).toFixed(1) + "%"
-                            : ""
-                        }
-                      />
-                      <StatCard
-                        title="Avg Wait (s)"
-                        value={
-                          display ? display.avgWaitSeconds.toFixed(1) : "—"
-                        }
-                      />
-                      <StatCard
-                        title="Top Inbound"
-                        value={
-                          display
-                            ? display.topInboundPerformer?.user || "—"
-                            : "—"
-                        }
-                        footer={
-                          display?.topInboundPerformer
-                            ? display.topInboundPerformer.count + " answered"
-                            : null
-                        }
-                      />
-                    </div>
-                    {display && (
-                      <div className="panel" style={{ marginTop: 16 }}>
-                        <h3>Top Categories</h3>
-                        <CategoryBar
-                          categories={display.categoryCounts.slice(0, 10)}
+                      <div className="cards-row">
+                        <StatCard
+                          title="Inbound"
+                          value={display?.inboundEffective ?? "—"}
+                        />
+                        <StatCard
+                          title="Outbound"
+                          value={display?.outbound ?? "—"}
+                        />
+                        <StatCard
+                          title="Answered"
+                          value={display?.answered ?? "—"}
+                        />
+                        <StatCard
+                          title="Missed"
+                          value={display?.missed ?? "—"}
+                          delta={
+                            display
+                              ? (
+                                  (display.missed /
+                                    (display.inboundEffective || 1)) *
+                                  100
+                                ).toFixed(1) + "%"
+                              : ""
+                          }
+                        />
+                        <StatCard
+                          title="Avg Wait (s)"
+                          value={
+                            display ? display.avgWaitSeconds.toFixed(1) : "—"
+                          }
+                        />
+                        <StatCard
+                          title="Top Inbound"
+                          value={
+                            display
+                              ? display.topInboundPerformer?.user || "—"
+                              : "—"
+                          }
+                          footer={
+                            display?.topInboundPerformer
+                              ? display.topInboundPerformer.count + " answered"
+                              : null
+                          }
                         />
                       </div>
-                    )}
-                    {display && (
-                      <>
-                        <div className="chart-row mt24">
-                          <div className="panel">
-                            <h3>Missed Breakdown</h3>
-                            <MissedBreakdownChart data={display} />
-                          </div>
-                          <div className="panel">
-                            <h3>Call Performance</h3>
-                            <CallPerformanceChart data={display} />
-                          </div>
-                          <div className="panel">
-                            <AgentMetrics
-                              data={display}
-                              onlyAgents={selectedAgents}
-                            />
-                          </div>
+                      {display && (
+                        <div className="panel" style={{ marginTop: 16 }}>
+                          <h3>Top Categories</h3>
+                          <CategoryBar
+                            categories={display.categoryCounts.slice(0, 10)}
+                          />
                         </div>
-                        <div className="panel mt24">
-                          <h3>KPIs</h3>
-                          <KpiBars items={kpis} />
-                        </div>
-                      </>
-                    )}
-                  </div>
+                      )}
+                      {display && (
+                        <>
+                          <div className="chart-row mt24">
+                            <div className="panel">
+                              <h3>Missed Breakdown</h3>
+                              <MissedBreakdownChart data={display} />
+                            </div>
+                            <div className="panel">
+                              <h3>Call Performance</h3>
+                              <CallPerformanceChart data={display} />
+                            </div>
+                            <div className="panel">
+                              <AgentMetrics
+                                data={display}
+                                onlyAgents={selectedAgents}
+                              />
+                            </div>
+                          </div>
+                          <div className="panel mt24">
+                            <h3>KPIs</h3>
+                            <KpiBars items={kpis} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </RequireAuth>
                 }
               />
-              <Route path="/history" element={<History />} />
-              <Route path="/history/month/:month" element={<HistoryMonth />} />
-              <Route path="/history/:date" element={<HistoryDay />} />
-              <Route path="/agents" element={<AgentsPage />} />
+              <Route
+                path="/history"
+                element={
+                  <RequireAuth>
+                    <History />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/history/month/:month"
+                element={
+                  <RequireAuth>
+                    <HistoryMonth />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/history/:date"
+                element={
+                  <RequireAuth>
+                    <HistoryDay />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/agents"
+                element={
+                  <RequireAuth>
+                    <AgentsPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/import/bulk"
+                element={
+                  <RequireAuth>
+                    <BulkImport />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/showroom"
+                element={
+                  <RequireAuth>
+                    <ShowroomDashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <RequireAdmin>
+                    <AdminUsers />
+                  </RequireAdmin>
+                }
+              />
+              <Route
+                path="/bootstrap"
+                element={
+                  <RequireAuth>
+                    <BootstrapAdmin />
+                  </RequireAuth>
+                }
+              />
             </Routes>
           </div>
         </div>

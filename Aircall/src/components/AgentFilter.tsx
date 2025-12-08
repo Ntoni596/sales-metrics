@@ -76,7 +76,7 @@ export function AgentFilter({
               gap: 6,
               alignItems: "center",
               padding: "4px 8px",
-              border: "1px solid #2d3748",
+              border: "1px solid #950810",
               borderRadius: 6,
             }}
           >
