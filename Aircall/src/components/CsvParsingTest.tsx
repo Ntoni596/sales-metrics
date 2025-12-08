@@ -10,6 +10,15 @@ const CsvParsingTest: React.FC = () => {
 
     const rows = [];
 
+    // Helper function to create a row with exactly 41 fields
+    const createRow = (fields: string[]) => {
+      // Ensure exactly 41 fields by padding with empty strings if needed
+      while (fields.length < 41) {
+        fields.push("");
+      }
+      return fields.slice(0, 41).join(",");
+    };
+
     // Generate 75 answered inbound calls
     for (let i = 1; i <= 75; i++) {
       const category =
@@ -18,52 +27,71 @@ const CsvParsingTest: React.FC = () => {
           : i <= 20
           ? "Progress update request"
           : "Sales (Purchase Enquiry)";
+      const tag =
+        i <= 10
+          ? "New Orders Inquiry"
+          : i <= 20
+          ? "Progress update request"
+          : "";
+
       rows.push(
-        `${category},2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
-          2,
-          "0"
-        )}:${String((i * 7) % 60).padStart(
-          2,
-          "0"
-        )}:00,Etc/UTC,2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
-          2,
-          "0"
-        )}:${String((i * 7) % 60).padStart(2, "0")}:00,AU,inbound,61${String(
-          400000000 + i
-        ).padStart(9, "0")},61399174772,Yes,,Agent ${(i % 5) + 1},${
-          300 + i * 2
-        },${280 + i * 2},,recording_${i},,${
-          i <= 10
-            ? "New Orders Inquiry"
-            : i <= 20
-            ? "Progress update request"
-            : ""
-        },,Sales,Inbound - Answered,2025-12-04 ${String(
-          Math.floor(i / 10) + 18
-        ).padStart(2, "0")}:${String((i * 7) % 60).padStart(
-          2,
-          "0"
-        )}:00,2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
-          2,
-          "0"
-        )}:${String((i * 7 + 5) % 60).padStart(
-          2,
-          "0"
-        )}:00,Sales (+61 3 9917 4772),+61 ${String(400000000 + i).padStart(
-          9,
-          "0"
-        )},${String(Math.floor((280 + i * 2) / 60)).padStart(2, "0")}:${String(
-          (280 + i * 2) % 60
-        ).padStart(2, "0")},call_${i}_answered,Answered,00:00:${String(
-          5 + (i % 10)
-        ).padStart(2, "0")},00:00:${String(3 + (i % 7)).padStart(
-          2,
-          "0"
-        )},00:00:${String(2 + (i % 5)).padStart(2, "0")},${
-          3331500000 + i
-        },agent,Sales,Sales or Support Prompt,https://dashboard.aircall.io/calls/${
-          3331500000 + i
-        }/timeline,,,,,Sales (+61 3 9917 4772),`
+        createRow([
+          category, // line
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // datetime (tz offset incl.)
+          "Etc/UTC", // number timezone
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // datetime (utc)
+          "AU", // country_code
+          "inbound", // direction
+          `61${String(400000000 + i).padStart(9, "0")}`, // from
+          "61399174772", // to
+          "Yes", // answered
+          "", // missed_call_reason
+          `Agent ${(i % 5) + 1}`, // user
+          `${300 + i * 2}`, // duration (total)
+          `${280 + i * 2}`, // duration (in call)
+          "", // voicemail
+          `recording_${i}`, // recording
+          "", // comments
+          tag, // tags
+          "", // call quality
+          "Sales", // team
+          "Inbound - Answered", // call direction - type
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // call start time
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 7 + 5) % 60).padStart(2, "0")}:00`, // call end time
+          "Sales (+61 3 9917 4772)", // aircall number
+          `+61 ${String(400000000 + i).padStart(9, "0")}`, // customer number
+          `${String(Math.floor((280 + i * 2) / 60)).padStart(2, "0")}:${String(
+            (280 + i * 2) % 60
+          ).padStart(2, "0")}`, // in-call duration
+          `call_${i}_answered`, // call id
+          "Answered", // call type
+          `00:00:${String(5 + (i % 10)).padStart(2, "0")}`, // waiting time
+          `00:00:${String(3 + (i % 7)).padStart(2, "0")}`, // time to answer
+          `00:00:${String(2 + (i % 5)).padStart(2, "0")}`, // time in ivr
+          `${3331500000 + i}`, // call id (internal)
+          "agent", // disconnected by
+          "Sales", // ivr branch
+          "Sales or Support Prompt", // ivr widget
+          `https://dashboard.aircall.io/calls/${3331500000 + i}/timeline`, // call timeline
+          "", // callback details
+          "", // callback failure
+          "", // automatic callback pending time
+          "", // time with ai voice agent
+          "Sales (+61 3 9917 4772)", // entry number
+          "", // ai voice agent transfer branch
+        ])
       );
     }
 
@@ -77,87 +105,126 @@ const CsvParsingTest: React.FC = () => {
     ];
     for (let i = 76; i <= 83; i++) {
       const reason = missedReasons[(i - 76) % missedReasons.length];
+
       rows.push(
-        `Sales (Purchase Enquiry),2025-12-04 ${String(
-          Math.floor(i / 10) + 7
-        ).padStart(2, "0")}:${String((i * 7) % 60).padStart(
-          2,
-          "0"
-        )}:00,Etc/UTC,2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
-          2,
-          "0"
-        )}:${String((i * 7) % 60).padStart(2, "0")}:00,AU,inbound,61${String(
-          400000000 + i
-        ).padStart(9, "0")},61399174772,No,${reason},[No associated user],${
-          30 + i * 3
-        },0,,,,,,,Sales,Inbound - Missed,2025-12-04 ${String(
-          Math.floor(i / 10) + 18
-        ).padStart(2, "0")}:${String((i * 7) % 60).padStart(
-          2,
-          "0"
-        )}:00,2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
-          2,
-          "0"
-        )}:${String((i * 7 + 2) % 60).padStart(
-          2,
-          "0"
-        )}:00,Sales (+61 3 9917 4772),+61 ${String(400000000 + i).padStart(
-          9,
-          "0"
-        )},,call_${i}_missed,Missed,00:00:${String(15 + (i % 10)).padStart(
-          2,
-          "0"
-        )},,00:00:${String(5 + (i % 8)).padStart(2, "0")},${
-          3331500000 + i
-        },external,Sales,Sales or Support Prompt,https://dashboard.aircall.io/calls/${
-          3331500000 + i
-        }/timeline,,,,,Sales (+61 3 9917 4772),`
+        createRow([
+          "Sales (Purchase Enquiry)", // line
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // datetime (tz offset incl.)
+          "Etc/UTC", // number timezone
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // datetime (utc)
+          "AU", // country_code
+          "inbound", // direction
+          `61${String(400000000 + i).padStart(9, "0")}`, // from
+          "61399174772", // to
+          "No", // answered
+          reason, // missed_call_reason
+          "[No associated user]", // user
+          `${30 + i * 3}`, // duration (total)
+          "0", // duration (in call)
+          "", // voicemail
+          "", // recording
+          "", // comments
+          "", // tags
+          "", // call quality
+          "Sales", // team
+          "Inbound - Missed", // call direction - type
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 7) % 60).padStart(2, "0")}:00`, // call start time
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 7 + 2) % 60).padStart(2, "0")}:00`, // call end time
+          "Sales (+61 3 9917 4772)", // aircall number
+          `+61 ${String(400000000 + i).padStart(9, "0")}`, // customer number
+          "", // in-call duration
+          `call_${i}_missed`, // call id
+          "Missed", // call type
+          `00:00:${String(15 + (i % 10)).padStart(2, "0")}`, // waiting time
+          "", // time to answer
+          `00:00:${String(5 + (i % 8)).padStart(2, "0")}`, // time in ivr
+          `${3331500000 + i}`, // call id (internal)
+          "external", // disconnected by
+          "Sales", // ivr branch
+          "Sales or Support Prompt", // ivr widget
+          `https://dashboard.aircall.io/calls/${3331500000 + i}/timeline`, // call timeline
+          "", // callback details
+          "", // callback failure
+          "", // automatic callback pending time
+          "", // time with ai voice agent
+          "Sales (+61 3 9917 4772)", // entry number
+          "", // ai voice agent transfer branch
+        ])
       );
     }
 
     // Generate 57 outbound calls (all answered for simplicity)
     for (let i = 84; i <= 140; i++) {
       rows.push(
-        `Aftershock PC,2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
-          2,
-          "0"
-        )}:${String((i * 5) % 60).padStart(
-          2,
-          "0"
-        )}:00,Australia/Melbourne,2025-12-04 ${String(
-          Math.floor(i / 10) + 7
-        ).padStart(2, "0")}:${String((i * 5) % 60).padStart(
-          2,
-          "0"
-        )}:00,AU,outbound,61399173729,61${String(400000000 + i).padStart(
-          9,
-          "0"
-        )},Yes,,Agent ${((i - 83) % 3) + 1},${180 + i * 2},${
-          160 + i * 2
-        },,,,,,,Outbound,2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
-          2,
-          "0"
-        )}:${String((i * 5) % 60).padStart(2, "0")}:00,2025-12-04 ${String(
-          Math.floor(i / 10) + 18
-        ).padStart(2, "0")}:${String((i * 5 + 3) % 60).padStart(
-          2,
-          "0"
-        )}:00,Aftershock PC (+61 3 9917 3729),+61 ${String(
-          400000000 + i
-        ).padStart(9, "0")},${String(Math.floor((160 + i * 2) / 60)).padStart(
-          2,
-          "0"
-        )}:${String((160 + i * 2) % 60).padStart(
-          2,
-          "0"
-        )},call_${i}_outbound,Outbound,00:00:${String(3 + (i % 7)).padStart(
-          2,
-          "0"
-        )},,00:00:01,${
-          3331500000 + i
-        },external,,,https://dashboard.aircall.io/calls/${
-          3331500000 + i
-        }/timeline,,,,,,`
+        createRow([
+          "Aftershock PC", // line
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 5) % 60).padStart(2, "0")}:00`, // datetime (tz offset incl.)
+          "Australia/Melbourne", // number timezone
+          `2025-12-04 ${String(Math.floor(i / 10) + 7).padStart(
+            2,
+            "0"
+          )}:${String((i * 5) % 60).padStart(2, "0")}:00`, // datetime (utc)
+          "AU", // country_code
+          "outbound", // direction
+          "61399173729", // from
+          `61${String(400000000 + i).padStart(9, "0")}`, // to
+          "Yes", // answered
+          "", // missed_call_reason
+          `Agent ${((i - 83) % 3) + 1}`, // user
+          `${180 + i * 2}`, // duration (total)
+          `${160 + i * 2}`, // duration (in call)
+          "", // voicemail
+          "", // recording
+          "", // comments
+          "", // tags
+          "", // call quality
+          "", // team
+          "Outbound", // call direction - type
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 5) % 60).padStart(2, "0")}:00`, // call start time
+          `2025-12-04 ${String(Math.floor(i / 10) + 18).padStart(
+            2,
+            "0"
+          )}:${String((i * 5 + 3) % 60).padStart(2, "0")}:00`, // call end time
+          "Aftershock PC (+61 3 9917 3729)", // aircall number
+          `+61 ${String(400000000 + i).padStart(9, "0")}`, // customer number
+          `${String(Math.floor((160 + i * 2) / 60)).padStart(2, "0")}:${String(
+            (160 + i * 2) % 60
+          ).padStart(2, "0")}`, // in-call duration
+          `call_${i}_outbound`, // call id
+          "Outbound", // call type
+          `00:00:${String(3 + (i % 7)).padStart(2, "0")}`, // waiting time
+          "", // time to answer
+          "00:00:01", // time in ivr
+          `${3331500000 + i}`, // call id (internal)
+          "external", // disconnected by
+          "", // ivr branch
+          "", // ivr widget
+          `https://dashboard.aircall.io/calls/${3331500000 + i}/timeline`, // call timeline
+          "", // callback details
+          "", // callback failure
+          "", // automatic callback pending time
+          "", // time with ai voice agent
+          "", // entry number
+          "", // ai voice agent transfer branch
+        ])
       );
     }
 
