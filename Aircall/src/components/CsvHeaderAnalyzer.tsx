@@ -155,7 +155,7 @@ export function CsvHeaderAnalyzer({ file, onHeaderAnalysis }: CsvPreviewProps) {
                   style={{
                     padding: "4px 8px",
                     margin: "2px 0",
-                    background: "#f0fdf4",
+                    background: "#059669",
                     borderRadius: 4,
                     display: "flex",
                     justifyContent: "space-between",
@@ -170,7 +170,7 @@ export function CsvHeaderAnalyzer({ file, onHeaderAnalysis }: CsvPreviewProps) {
         </div>
 
         <div>
-          <h4 style={{ marginBottom: 8, color: "#6b7280" }}>
+          <h4 style={{ marginBottom: 8, color: "#000000ff" }}>
             ? Unmapped Headers ({analysis.unmappedHeaders.length})
           </h4>
           <div style={{ maxHeight: 200, overflow: "auto", fontSize: "0.9em" }}>
@@ -180,7 +180,7 @@ export function CsvHeaderAnalyzer({ file, onHeaderAnalysis }: CsvPreviewProps) {
                 style={{
                   padding: "4px 8px",
                   margin: "2px 0",
-                  background: "#f9fafb",
+                  background: "#dc2626",
                   borderRadius: 4,
                   fontFamily: "monospace",
                 }}
@@ -217,8 +217,8 @@ export function CsvHeaderAnalyzer({ file, onHeaderAnalysis }: CsvPreviewProps) {
                             (k) => analysis.mappedHeaders[k] === header
                           ) || ""
                         ]
-                          ? "#f0fdf4"
-                          : "#f9fafb",
+                          ? "#059669"
+                          : "#dc2626",
                       }}
                     >
                       {header}
