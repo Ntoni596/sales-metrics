@@ -15,6 +15,13 @@ const sections = [
     title: "Import",
     items: [{ to: "/import/bulk", label: "Bulk (1-year CSV)" }],
   },
+  {
+    title: "Settings",
+    items: [
+      { to: "/settings/csv-headers", label: "CSV Headers" },
+      { to: "/settings/csv-tester", label: "CSV Tester" },
+    ],
+  },
 ];
 
 export function Sidebar() {

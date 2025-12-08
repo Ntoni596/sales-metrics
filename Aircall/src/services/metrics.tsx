@@ -1,11 +1,12 @@
 import Papa from "papaparse";
 import type { CallRecord, DailyMetrics, AgentStats } from "../types";
+import { loadCsvConfig, findMatchingHeader } from "./csvConfig";
 
 interface RawRow {
   [key: string]: string | undefined;
 }
 
-// Parse CSV with flexible header support
+// Parse CSV with configurable header support
 export async function parseCsv(file: File): Promise<CallRecord[]> {
   const text = await file.text();
   const parsed = Papa.parse<RawRow>(text, {
@@ -15,6 +16,17 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
   if (parsed.errors.length) {
     throw new Error("CSV parse error: " + parsed.errors[0].message);
   }
+
+  // Load CSV configuration
+  const csvConfig = await loadCsvConfig();
+  const availableHeaders = Object.keys(parsed.data[0] || {});
+
+  // Find matching headers using configuration
+  const getFieldValue = (fieldMappings: string[]) => {
+    const header = findMatchingHeader(availableHeaders, fieldMappings);
+    return header;
+  };
+
   const rows: CallRecord[] = [];
   const parseDurationToSeconds = (v?: string): number | undefined => {
     if (!v) return undefined;
@@ -35,48 +47,55 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
     }
     return undefined;
   };
+
+  // Find headers using configuration
+  const timestampHeader = getFieldValue(csvConfig.timestamp);
+  const directionHeader = getFieldValue(csvConfig.direction);
+  const answeredHeader = getFieldValue(csvConfig.answered);
+  const missedReasonHeader = getFieldValue(csvConfig.missedReason);
+  const userHeader = getFieldValue(csvConfig.user);
+  const waitTimeHeader = getFieldValue(csvConfig.waitTime);
+  const tagsHeader = getFieldValue(csvConfig.tags);
+
   for (const r of parsed.data) {
     if (!r) continue;
+
     // Direction
-    const directionSource =
-      (r["Direction"] as string) ||
-      (r["direction"] as string) ||
-      (r["Call direction - type"] as string) ||
-      "";
+    const directionSource = directionHeader
+      ? (r[directionHeader] as string) || ""
+      : "";
     const directionLower = directionSource.toLowerCase();
     let direction: "inbound" | "outbound" = directionLower.includes("out")
       ? "outbound"
       : "inbound";
+
     if (!directionSource) {
-      // Fallback: parse from "Inbound - Answered" style
-      const type = (r["Call direction - type"] || "").toString().toLowerCase();
+      // Fallback: try to detect from call direction type patterns
+      const typeHeader = getFieldValue(["call direction - type", "Call Type"]);
+      const type = typeHeader
+        ? (r[typeHeader] || "").toString().toLowerCase()
+        : "";
       if (type.startsWith("out")) direction = "outbound";
       else if (type.startsWith("in")) direction = "inbound";
     }
 
     // Answered
-    const answeredRaw = (
-      (r["answered"] as string) ||
-      (r["Answered"] as string) ||
-      (r["Call Type"] as string) ||
-      (r["Call Status"] as string) ||
-      (r["Status"] as string) ||
-      ""
-    ).toString();
-    const answered = /^(yes|true|answered|completed)$/i.test(answeredRaw);
+    const answeredRaw = answeredHeader
+      ? (r[answeredHeader] as string) || ""
+      : "";
+    const answered = /^(yes|true|answered|completed|1)$/i.test(
+      answeredRaw.toString()
+    );
+
     let missedReason: CallRecord["missedReason"] | undefined;
     // Missed reason mapping from Aircall canonical values with fallbacks
     if (!answered) {
-      const missedReasonRaw = (
-        (r["missed_call_reason"] as string) ||
-        (r["Missed cause"] as string) ||
-        ""
-      )
-        .toString()
-        .trim()
-        .toLowerCase();
+      const missedReasonRaw = missedReasonHeader
+        ? (r[missedReasonHeader] as string) || ""
+        : "";
+      const normalizedReason = missedReasonRaw.toString().trim().toLowerCase();
 
-      switch (missedReasonRaw) {
+      switch (normalizedReason) {
         case "outside_business_hours":
         case "outside business hours":
         case "out_of_opening_hours":
@@ -86,7 +105,7 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
         case "abandoned":
         case "abandon":
         case "abandoned_in_ivr":
-          missedReason = "abandoned"; // treat short abandon as abandoned
+          missedReason = "abandoned";
           break;
         case "no_active_agent":
         case "no agent available":
@@ -100,54 +119,36 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
           missedReason = "agent_no_answer";
           break;
         default: {
-          const mLower = missedReasonRaw;
-          if (/(outside|business\s*hours)/.test(mLower))
+          if (/(outside|business\s*hours)/.test(normalizedReason))
             missedReason = "outside_hours";
-          else if (/(short_)?abandon|ivr/.test(mLower))
+          else if (/(short_)?abandon|ivr/.test(normalizedReason))
             missedReason = "abandoned";
-          else if (/no\s*agent|no_active_agent|busy/.test(mLower))
+          else if (/no\s*agent|no_active_agent|busy/.test(normalizedReason))
             missedReason = "agent_unavailable";
-          else if (/(did not answer|no\s*answer)/.test(mLower))
+          else if (/(did not answer|no\s*answer)/.test(normalizedReason))
             missedReason = "agent_no_answer";
         }
       }
 
-      // Secondary inference: if no explicit reason, try Disconnected By
+      // Secondary inference: try Disconnected By if configured
       if (!missedReason) {
-        const disc = (r["Disconnected By"] as string)?.toString().toLowerCase();
+        const disconnectedByHeader = getFieldValue(csvConfig.disconnectedBy);
+        const disc = disconnectedByHeader
+          ? (r[disconnectedByHeader] as string)?.toString().toLowerCase()
+          : "";
         if (disc === "external") missedReason = "abandoned";
       }
     }
-    const user = (
-      (r["Agent"] as string) ||
-      (r["User"] as string) ||
-      (r["user"] as string) ||
-      (r["Owner"] as string) ||
-      (r["Answered By"] as string) ||
-      "[No associated user]"
-    )
-      .toString()
-      .trim();
 
-    // Wait time parsing (prefer specific queue-related columns)
-    const waitStr =
-      (r["Wait Time (s)"] as string) ||
-      (r["Waiting time (s)"] as string) ||
-      (r["Waiting time"] as string) ||
-      (r["Waiting Time"] as string) ||
-      (r["Time to answer"] as string) ||
-      (r["wait"] as string) ||
-      (r["queue_time"] as string) ||
-      "";
+    const user = userHeader
+      ? (r[userHeader] as string) || "[No associated user]"
+      : "[No associated user]";
+
+    // Wait time parsing
+    const waitStr = waitTimeHeader ? (r[waitTimeHeader] as string) || "" : "";
     const waitSeconds = parseDurationToSeconds(waitStr);
 
-    const tagsRaw = (
-      (r["Tags"] as string) ||
-      (r["tags"] as string) ||
-      (r["Tag"] as string) ||
-      (r["Labels"] as string) ||
-      ""
-    ).toString();
+    const tagsRaw = tagsHeader ? (r[tagsHeader] as string) || "" : "";
     const tags = tagsRaw
       ? tagsRaw
           .split(/[,;|/]/)
@@ -156,24 +157,9 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
       : [];
 
     // Timestamp detection
-    let timestamp = (
-      r["Time"] ||
-      r["Timestamp"] ||
-      r["Date"] ||
-      r["datetime (UTC)"] ||
-      r["Call start time"] ||
-      r["Started At"] ||
-      r["Started at"] ||
-      r["Start Time"] ||
-      r["Call Started At"] ||
-      r["Created At"] ||
-      r["Date/Time"] ||
-      r["Call Date"] ||
-      ""
-    )
-      ?.toString()
-      .trim();
+    let timestamp = timestampHeader ? (r[timestampHeader] as string) || "" : "";
     if (!timestamp) {
+      // Fallback: scan all values for date-like patterns
       for (const v of Object.values(r)) {
         if (!v) continue;
         const val = v.toString().trim();
@@ -184,6 +170,7 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
       }
     }
     if (!timestamp) continue; // skip rows without any time reference
+
     rows.push({
       timestamp,
       direction,
@@ -194,9 +181,15 @@ export async function parseCsv(file: File): Promise<CallRecord[]> {
       tags,
     });
   }
+
   if (!rows.length) {
+    const configuredHeaders = Object.values(csvConfig).flat();
+    const foundHeaders = availableHeaders.slice(0, 10).join(", ");
     throw new Error(
-      "No records found. Ensure your CSV includes a timestamp column (Time, Timestamp, Date, Started At)."
+      `No records found. Available headers: ${foundHeaders}${
+        availableHeaders.length > 10 ? "..." : ""
+      }. ` +
+        `Please configure CSV headers in Settings if your file uses different column names.`
     );
   }
   return rows;
