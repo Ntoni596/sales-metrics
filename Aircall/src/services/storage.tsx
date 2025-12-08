@@ -79,6 +79,8 @@ async function fetchWithCache<T>(
 const LATEST_DAILY_KEY = "latest";
 const MONTHLY_SUMMARIES_KEY = "monthlySummaries";
 const FRONT_MONTHLY_SUMMARIES_KEY = "frontMonthlySummaries";
+const FRONT_LATEST_DAILY_KEY = "frontLatestDaily";
+const FRONT_LATEST_MONTHLY_KEY = "frontLatestMonthly";
 
 const latestDailyCache = new Map<string, CacheEntry<DailyMetrics | null>>();
 const latestDailyPending = new Map<string, Promise<DailyMetrics | null>>();
@@ -123,6 +125,24 @@ const frontDailyByMonthCache = new Map<
 const frontDailyByMonthPending = new Map<
   string,
   Promise<FrontDailySummary[]>
+>();
+
+const frontLatestDailyCache = new Map<
+  string,
+  CacheEntry<FrontDailySummary | null>
+>();
+const frontLatestDailyPending = new Map<
+  string,
+  Promise<FrontDailySummary | null>
+>();
+
+const frontLatestMonthlyCache = new Map<
+  string,
+  CacheEntry<FrontMonthlySummary | null>
+>();
+const frontLatestMonthlyPending = new Map<
+  string,
+  Promise<FrontMonthlySummary | null>
 >();
 
 export async function saveDailyMetrics(
@@ -373,6 +393,10 @@ export async function saveFrontSummaries(analytics: FrontAnalytics) {
     frontDailyByMonthCache.delete(key);
     frontDailyByMonthPending.delete(key);
   }
+  frontLatestDailyCache.clear();
+  frontLatestDailyPending.clear();
+  frontLatestMonthlyCache.clear();
+  frontLatestMonthlyPending.clear();
 }
 
 export async function getFrontMonthlySummaries(): Promise<
@@ -386,6 +410,42 @@ export async function getFrontMonthlySummaries(): Promise<
       const q = query(collection(db, "frontMonthly"), orderBy("month", "desc"));
       const snap = await getDocs(q);
       return snap.docs.map((d) => normalizeFrontMonthly(d.data()));
+    }
+  );
+}
+
+export async function getLatestFrontDaily(): Promise<FrontDailySummary | null> {
+  return fetchWithCache(
+    frontLatestDailyCache,
+    frontLatestDailyPending,
+    FRONT_LATEST_DAILY_KEY,
+    async () => {
+      const q = query(
+        collection(db, "frontDaily"),
+        orderBy("date", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return null;
+      return normalizeFrontDaily(snap.docs[0].data());
+    }
+  );
+}
+
+export async function getLatestFrontMonthly(): Promise<FrontMonthlySummary | null> {
+  return fetchWithCache(
+    frontLatestMonthlyCache,
+    frontLatestMonthlyPending,
+    FRONT_LATEST_MONTHLY_KEY,
+    async () => {
+      const q = query(
+        collection(db, "frontMonthly"),
+        orderBy("month", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (snap.empty) return null;
+      return normalizeFrontMonthly(snap.docs[0].data());
     }
   );
 }
