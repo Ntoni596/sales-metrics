@@ -10,6 +10,7 @@ export interface CsvHeaderMapping {
   user: string[];
   waitTime: string[];
   tags: string[];
+  line: string[]; // Call line/category identifier
 
   // Additional fields from new headers
   countryCode: string[];
@@ -66,6 +67,7 @@ export const DEFAULT_CSV_MAPPING: CsvHeaderMapping = {
     "queue_time",
   ],
   tags: ["tags", "Tags", "Tag", "Labels"],
+  line: ["line", "Line", "Call Line", "Category"],
 
   // New fields from updated CSV format
   countryCode: ["country_code", "country code", "Country Code"],

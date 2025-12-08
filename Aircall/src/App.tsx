@@ -19,6 +19,7 @@ import { BulkImport } from "./components/BulkImport";
 import { CsvHeaderSettings } from "./components/CsvHeaderSettings";
 import { CsvFormatGuide } from "./components/CsvFormatGuide";
 import { CsvTester } from "./components/CsvTester";
+import CsvParsingTest from "./components/CsvParsingTest";
 import {
   MissedBreakdownChart,
   CallPerformanceChart,
@@ -317,6 +318,14 @@ function App() {
                 element={
                   <RequireAuth>
                     <CsvTester />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path='/debug/parsing-test'
+                element={
+                  <RequireAuth>
+                    <CsvParsingTest />
                   </RequireAuth>
                 }
               />

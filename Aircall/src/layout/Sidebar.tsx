@@ -22,6 +22,10 @@ const sections = [
       { to: "/settings/csv-tester", label: "CSV Tester" },
     ],
   },
+  {
+    title: "Debug",
+    items: [{ to: "/debug/parsing-test", label: "Parsing Test" }],
+  },
 ];
 
 export function Sidebar() {
